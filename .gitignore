@@ -1,0 +1,9 @@
+node_modules/
+dist/
+out/
+.DS_Store
+# secrets — never commit
+credentials.json
+client_secret*.json
+token.json
+.env
