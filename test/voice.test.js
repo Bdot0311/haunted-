@@ -68,3 +68,8 @@ test('voice off means no network at all', async (t) => {
   assert.equal(await speak('quiet', { ...config, voiceEnabled: false }), null);
   assert.equal(fetch.mock.callCount(), 0);
 });
+
+test('a ghost carrying several threads says how many', () => {
+  assert.match(hauntLine({ ...ghost, count: 63 }), /63 letters\.\.\. unanswered\.$/);
+  assert.doesNotMatch(hauntLine({ ...ghost, count: 1 }), /letters/);
+});

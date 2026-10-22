@@ -26,6 +26,8 @@ const DEFAULTS = {
   // Opt-in: tag haunted threads with a Gmail label. Needs the gmail.modify scope.
   applyLabel: false,
   labelName: '👻 haunted',
+  // Senders you told the app to leave alone (lower-case addresses).
+  ignoredSenders: [],
 };
 
 const ENV = {
@@ -56,4 +58,12 @@ function loadConfig(env = process.env) {
   return config;
 }
 
-module.exports = { loadConfig, DEFAULTS, DEFAULT_VOICE_ID };
+// Merges `patch` into ~/.unfinished-business/config.json, keeping other keys.
+function saveConfig(patch) {
+  const file = path.join(dataDir, 'config.json');
+  const current = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+  fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(file, JSON.stringify({ ...current, ...patch }, null, 2), { mode: 0o600 });
+}
+
+module.exports = { loadConfig, saveConfig, DEFAULTS, DEFAULT_VOICE_ID };

@@ -143,7 +143,17 @@ function scanStep() {
       h(
         'ul',
         { class: 'ghosts' },
-        scan.ghosts.map((g) => h('li', {}, h('span', { class: 'days' }, `${g.ageDays}d`), h('span', { class: 'who' }, g.name), h('span', { class: 'what' }, g.subject || '(no subject)')))
+        scan.ghosts.map((g) =>
+          h(
+            'li',
+            {},
+            h('span', { class: 'days' }, `${g.ageDays}d`),
+            h('span', { class: 'who', title: g.email }, g.name),
+            g.count > 1 && h('span', { class: 'count' }, `×${g.count}`),
+            h('span', { class: 'what' }, g.subject || '(no subject)'),
+            h('button', { class: 'link ignore', title: `Never haunt me with ${g.email}`, onclick: () => ignore(g), disabled: Boolean(busy) }, 'Ignore')
+          )
+        )
       ),
       h('div', { class: 'row spaced' }, button('Look again', runScan, { action: 'scan' }))
     );
@@ -232,6 +242,15 @@ async function runScan() {
   scan = result;
   render();
   if (scan.total > 0) document.getElementById('step-release').scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+async function ignore(ghost) {
+  const status = await act('ignore', api.ignoreSender, ghost.email);
+  if (!status) return;
+  scan.ghosts = scan.ghosts.filter((g) => g.email !== ghost.email);
+  scan.total -= 1;
+  setStatus(status);
+  toast(`${ghost.name} won’t haunt you again.`);
 }
 
 async function start() {

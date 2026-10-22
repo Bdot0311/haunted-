@@ -96,6 +96,23 @@ function classifyThread(thread, myEmails, now, { minAgeDays, maxAgeDays }) {
   };
 }
 
+// One ghost per person: their oldest unanswered thread, carrying how many
+// threads from them are waiting. Once that one is dealt with, the next scan
+// sends their next-oldest. Sorted oldest (most haunting) first.
+function onePerSender(ghosts) {
+  const bySender = new Map();
+  for (const ghost of ghosts) {
+    const key = ghost.from.email;
+    const current = bySender.get(key);
+    if (!current) bySender.set(key, { ...ghost, count: 1 });
+    else {
+      const count = current.count + 1;
+      bySender.set(key, ghost.ageDays > current.ageDays ? { ...ghost, count } : { ...current, count });
+    }
+  }
+  return [...bySender.values()].sort((a, b) => b.ageDays - a.ageDays);
+}
+
 // 'replied' | 'archived' | null. A thread is laid to rest only by real action:
 // you answered it, or it left your inbox (archived, trashed or deleted).
 function exorcismReason(thread, myEmails) {
@@ -109,6 +126,7 @@ function exorcismReason(thread, myEmails) {
 module.exports = {
   classifyThread,
   exorcismReason,
+  onePerSender,
   cleanSubject,
   spokenName,
   parseAddress,
