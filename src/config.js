@@ -2,14 +2,14 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { dataDir } = require('./paths');
+const { dataDir, credentials } = require('./paths');
 
 // "Nathaniel C - Suspense, British calm" on ElevenLabs.
 const DEFAULT_VOICE_ID = 'AeRdCCKzvd23BpJoofzx';
 
 const DEFAULTS = {
   // Path to the Google OAuth "Desktop app" client file you downloaded.
-  credentialsPath: path.join(dataDir, 'credentials.json'),
+  credentialsPath: credentials,
   voiceId: DEFAULT_VOICE_ID,
   voiceModel: 'eleven_multilingual_v2',
   // Set to false to keep every subject line on your machine (no TTS calls).

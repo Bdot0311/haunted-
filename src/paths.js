@@ -11,6 +11,9 @@ const dataDir = process.env.UB_DATA_DIR || path.join(os.homedir(), '.unfinished-
 const paths = {
   dataDir,
   token: path.join(dataDir, 'token.json'),
+  credentials: path.join(dataDir, 'credentials.json'),
+  // ElevenLabs key, encrypted with the macOS Keychain via Electron safeStorage.
+  voiceKey: path.join(dataDir, 'elevenlabs.key'),
   voiceCache: path.join(dataDir, 'voice-cache'),
 };
 
