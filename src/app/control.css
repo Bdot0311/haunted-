@@ -280,7 +280,32 @@ ul.ghosts li {
   font-weight: 600;
 }
 
+.count {
+  flex: none;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+button.link.ignore {
+  flex: none;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--faint);
+  opacity: 0;
+}
+
+ul.ghosts li:hover button.ignore,
+button.link.ignore:focus-visible {
+  opacity: 1;
+}
+
+button.link.ignore:hover {
+  color: var(--bad);
+}
+
 .what {
+  flex: 1;
+  min-width: 0;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;

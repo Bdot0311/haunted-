@@ -1,9 +1,9 @@
 'use strict';
 
-const { classifyThread, exorcismReason } = require('./haunt');
+const { classifyThread, exorcismReason, onePerSender } = require('./haunt');
 
 const METADATA_HEADERS = ['From', 'Subject', 'Date', 'List-Unsubscribe', 'List-Id', 'Precedence', 'Auto-Submitted'];
-const MAX_THREADS = 150;
+const MAX_THREADS = 250;
 const CONCURRENCY = 8;
 
 async function myAddresses(gmail) {
@@ -61,15 +61,16 @@ async function scanInbox(gmail, config, now = Date.now()) {
   const ids = await listCandidateIds(gmail, config);
   const threads = await mapLimit(ids, CONCURRENCY, (id) => gmail.getThread(id, METADATA_HEADERS));
 
-  const ghosts = [];
+  const ignored = new Set((config.ignoredSenders || []).map((e) => e.toLowerCase()));
+  const unanswered = [];
   const skipped = {};
   for (const thread of threads) {
-    const result = classifyThread(thread, myEmails, now, config);
+    let result = classifyThread(thread, myEmails, now, config);
+    if (!result.skip && ignored.has(result.from.email)) result = { skip: 'ignored' };
     if (result.skip) skipped[result.skip] = (skipped[result.skip] || 0) + 1;
-    else ghosts.push(result);
+    else unanswered.push(result);
   }
-  ghosts.sort((a, b) => b.ageDays - a.ageDays);
-  return { ghosts, skipped, myEmails };
+  return { ghosts: onePerSender(unanswered), skipped, myEmails };
 }
 
 // 'replied' | 'archived' | 'deleted' | null (still unfinished).

@@ -64,3 +64,24 @@ test('removeLabelEverywhere untags every page then deletes the label', async () 
   assert.equal(deleted, 'L1');
   assert.equal(await removeLabelEverywhere({ listLabels: async () => ({ labels: [] }) }, '👻 haunted'), -1);
 });
+
+test('one ghost per sender: their oldest thread, with a count', async () => {
+  const gmail = fakeGmail([
+    thread('s1', [message({ from: 'Sales <sales@tool.io>', subject: 'Quick note', daysAgo: 20 })]),
+    thread('s2', [message({ from: 'Sales <sales@tool.io>', subject: 'Following up', daysAgo: 26 })]),
+    thread('s3', [message({ from: 'Sales <SALES@tool.io>', subject: 'Quick note', daysAgo: 10 })]),
+    thread('ana', [message({ from: 'Ana <ana@x.com>', daysAgo: 5 })]),
+  ]);
+  const { ghosts } = await scanInbox(gmail, config, NOW);
+  assert.deepEqual(ghosts.map((g) => [g.threadId, g.count]), [['s2', 3], ['ana', 1]]);
+});
+
+test('ignored senders never haunt', async () => {
+  const gmail = fakeGmail([
+    thread('s1', [message({ from: 'Sales <sales@tool.io>', daysAgo: 20 })]),
+    thread('ana', [message({ from: 'Ana <ana@x.com>', daysAgo: 5 })]),
+  ]);
+  const { ghosts, skipped } = await scanInbox(gmail, { ...config, ignoredSenders: ['Sales@Tool.io'] }, NOW);
+  assert.deepEqual(ghosts.map((g) => g.threadId), ['ana']);
+  assert.deepEqual(skipped, { ignored: 1 });
+});

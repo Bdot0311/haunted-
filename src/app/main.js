@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, shell, dialog, nativeImage } = require('electron');
 const paths = require('../paths');
-const { loadConfig } = require('../config');
+const { loadConfig, saveConfig } = require('../config');
 const { getAuthClient, isSignedIn, readClientSecrets } = require('../gmail/auth');
 const { createGmail } = require('../gmail/client');
 const { scanInbox, checkExorcism, myAddresses } = require('../gmail/scan');
@@ -91,10 +91,32 @@ function send(channel, payload) {
 
 // ---- haunting ---------------------------------------------------------------
 
+// One ghost per sender at a time, and never one that was already laid to rest.
 function enqueue(ghosts) {
   const known = new Set([...active.keys(), ...queue.map((g) => g.threadId), ...laidToRest]);
-  for (const ghost of ghosts) if (!known.has(ghost.threadId)) queue.push(ghost);
+  const senders = new Set([...active.values(), ...queue].map((g) => g.from.email));
+  for (const ghost of ghosts) {
+    if (known.has(ghost.threadId) || senders.has(ghost.from.email)) continue;
+    queue.push(ghost);
+    senders.add(ghost.from.email);
+  }
   queue.sort((a, b) => b.ageDays - a.ageDays);
+}
+
+// Silently sends away every ghost from a sender and stops them coming back.
+function ignoreSender(email) {
+  const address = String(email).toLowerCase();
+  if (!config.ignoredSenders.includes(address)) {
+    config.ignoredSenders = [...config.ignoredSenders, address];
+    saveConfig({ ignoredSenders: config.ignoredSenders });
+  }
+  for (let i = queue.length - 1; i >= 0; i--) if (queue[i].from.email === address) queue.splice(i, 1);
+  for (const ghost of [...active.values()]) {
+    if (ghost.from.email !== address) continue;
+    active.delete(ghost.threadId);
+    send('ghost:exorcise', { threadId: ghost.threadId, reason: 'ignored', audio: null });
+  }
+  pushStatus();
 }
 
 async function rescan() {
@@ -204,8 +226,9 @@ function stopHaunting() {
   if (overlay && !overlay.isDestroyed()) overlay.destroy();
   overlay = null;
   // Ghosts still on screen go back to waiting; they are not resolved.
-  enqueue([...active.values()]);
+  const unresolved = [...active.values()];
   active.clear();
+  enqueue(unresolved);
   haunting = false;
   banished = false;
   pushStatus();
@@ -325,8 +348,13 @@ function wireIpc() {
     return {
       total: ghosts.length,
       skipped,
-      ghosts: ghosts.slice(0, 12).map(({ name, ageDays, subject }) => ({ name, ageDays, subject })),
+      ghosts: ghosts.slice(0, 15).map(({ name, ageDays, subject, count, from }) => ({ name, ageDays, subject, count, email: from.email })),
     };
+  });
+
+  handle('control:ignoreSender', (email) => {
+    ignoreSender(email);
+    return status();
   });
 
   handle('control:setPace', (seconds) => {

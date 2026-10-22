@@ -39,7 +39,8 @@ function pick(list, seed) {
 
 function hauntLine(ghost) {
   const line = pick(LINES[tier(ghost.ageDays)], ghost.threadId);
-  return line({ name: ghost.name, subject: ghost.subject, days: spokenDays(ghost.ageDays) });
+  const said = line({ name: ghost.name, subject: ghost.subject, days: spokenDays(ghost.ageDays) });
+  return ghost.count > 1 ? `${said} ${ghost.count} letters... unanswered.` : said;
 }
 
 function exorcismLine(ghost, reason) {

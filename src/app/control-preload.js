@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('control', {
   setVoiceEnabled: call('control:setVoiceEnabled'),
   previewVoice: call('control:previewVoice'),
   scan: call('control:scan'),
+  ignoreSender: call('control:ignoreSender'),
   setPace: call('control:setPace'),
   start: call('control:start'),
   stop: call('control:stop'),
