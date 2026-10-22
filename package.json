@@ -1,23 +1,42 @@
 {
   "name": "unfinished-business",
-  "version": "0.1.0",
+  "productName": "Unfinished Business",
+  "version": "0.2.0",
   "description": "The emails you never answered come back as ghosts that haunt your desktop.",
+  "author": "Brandon",
   "license": "MIT",
   "private": true,
   "main": "src/app/main.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12"
   },
   "scripts": {
     "start": "electron .",
     "scan": "node bin/scan.js",
     "uninstall-haunt": "node bin/uninstall.js",
-    "test": "node --test \"test/**/*.test.js\""
+    "test": "node --test \"test/**/*.test.js\"",
+    "pack:mac": "electron-builder --mac dir"
   },
   "dependencies": {
     "google-auth-library": "^10.5.0"
   },
   "devDependencies": {
-    "electron": "^44.9.0"
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "io.github.bdot0311.unfinished-business",
+    "productName": "Unfinished Business",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "identity": null
+    }
   }
 }

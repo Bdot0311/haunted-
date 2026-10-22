@@ -116,6 +116,11 @@ async function getAuthClient(config, { open = openInBrowser, interactive = true 
   return client;
 }
 
+function isSignedIn(config) {
+  const token = readToken();
+  return Boolean(token && tokenCovers(token, scopesFor(config)));
+}
+
 async function revoke(config) {
   const token = readToken();
   if (!token) return false;
@@ -125,4 +130,4 @@ async function revoke(config) {
   return true;
 }
 
-module.exports = { getAuthClient, revoke, readToken, tokenCovers, READONLY, MODIFY };
+module.exports = { getAuthClient, isSignedIn, readClientSecrets, revoke, readToken, tokenCovers, READONLY, MODIFY };

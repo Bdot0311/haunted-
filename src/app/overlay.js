@@ -153,17 +153,20 @@ function summon({ ghost, audio }) {
   el.addEventListener('click', () => window.haunt.openThread(ghost.threadId));
   field.append(el);
 
-  // Enter from a random edge of the screen.
+  // Enter from a random edge of the screen, drifting toward the middle.
   const edge = Math.floor(Math.random() * 4);
   const W = window.innerWidth;
   const H = window.innerHeight;
+  const x = edge === 0 ? -size * 0.5 : edge === 1 ? W - size * 0.5 : Math.random() * (W - size);
+  const y = edge === 2 ? -size * 0.5 : edge === 3 ? H - size * 0.8 : Math.random() * (H - size);
   const state = {
     ghost,
     el,
     size,
-    x: edge === 0 ? -size * 0.5 : edge === 1 ? W - size * 0.5 : Math.random() * (W - size),
-    y: edge === 2 ? -size * 0.5 : edge === 3 ? H - size * 0.8 : Math.random() * (H - size),
-    heading: Math.random() * Math.PI * 2,
+    x,
+    y,
+    heading: Math.atan2(H / 2 - y, W / 2 - x) + (Math.random() - 0.5) * 0.8,
+    entering: true,
     speed: 26 - w * 14, // older ghosts move slower, and mean it
     phase: Math.random() * Math.PI * 2,
     buffer: null,
@@ -242,11 +245,20 @@ function step(now) {
 
     s.x += vx * dt;
     s.y += vy * dt;
-    // Turn back before drifting far off-screen.
-    if (s.x < -s.size * 0.3 || s.x > W - s.size * 0.7) s.heading = Math.PI - s.heading;
-    if (s.y < -s.size * 0.2 || s.y > H - s.size * 1.1) s.heading = -s.heading;
-    s.x = Math.max(-s.size * 0.4, Math.min(W - s.size * 0.6, s.x));
-    s.y = Math.max(-s.size * 0.3, Math.min(H - s.size, s.y));
+
+    // Keep the whole ghost and its caption on screen once it has arrived.
+    const minX = 0;
+    const maxX = W - s.size;
+    const minY = 0;
+    const maxY = H - s.size * 1.45;
+    if (s.entering) {
+      if (s.x >= minX && s.x <= maxX && s.y >= minY && s.y <= maxY) s.entering = false;
+    } else {
+      if (s.x < minX || s.x > maxX) s.heading = Math.PI - s.heading;
+      if (s.y < minY || s.y > maxY) s.heading = -s.heading;
+      s.x = Math.max(minX, Math.min(maxX, s.x));
+      s.y = Math.max(minY, Math.min(maxY, s.y));
+    }
 
     const bob = Math.sin(now / 900 + s.phase) * (6 + w * 6);
     const tilt = Math.sin(now / 1700 + s.phase) * 4;

@@ -39,36 +39,49 @@ Built solo during a one-week build sprint themed *Haunted*.
 | **One optional write** | `UB_LABEL=1` tags haunted threads with a `👻 haunted` label (needs `gmail.modify`). That label is the only thing it ever writes, and only if you turn it on. |
 | **Kill switch** | **⌘⌥⇧G** or the 👻 in the menu bar → *Banish all* instantly hides every ghost and silences them. *Quit* stops everything. |
 | **What leaves your Mac** | Gmail API calls go to Google. When voice is on, each ghost's spoken line (sender's first name, cleaned subject, number of days) is sent to ElevenLabs to be voiced. Email bodies are never read. Set `UB_VOICE=off` to keep everything local. |
-| **Local storage** | Everything lives in `~/.unfinished-business/`: your OAuth token (file mode `600`) and cached voice clips. |
-| **Undo** | `npm run uninstall-haunt` removes the label from every thread and deletes it, revokes the app's Google access, and deletes the token and voice cache. Add `--all` to delete the whole folder. |
+| **Local storage** | Everything lives in `~/.unfinished-business/`: your OAuth client and token (file mode `600`), your ElevenLabs key (encrypted with the macOS Keychain) and cached voice clips. |
+| **Undo** | **Undo everything…** at the bottom of the app window (or `npm run uninstall-haunt`) removes the label from every thread and deletes it, revokes the app's Google access, and deletes the saved sign-in, voice key and voice cache. |
 
 ## Setup (macOS)
 
-You'll need Node 20+, a Google account, and an ElevenLabs API key.
+No Terminal needed. You'll need a Google account and an ElevenLabs API key.
 
-1. **Google OAuth client (your own, about 5 minutes)**
+1. **Download the app** from the [latest release](https://github.com/Bdot0311/haunted-/releases/latest):
+   `Unfinished-Business-Apple-Silicon.dmg` for M-series Macs, `…-Intel.dmg` for older ones. Open it
+   and drag **Unfinished Business** into **Applications**.
+2. **Open it.** The app isn't notarized by Apple, so the first time macOS says it can't verify the
+   developer. Click **Done**, then **System Settings → Privacy & Security → Open Anyway**. You only
+   do this once.
+3. **Make your own Google OAuth client** (about 5 minutes, one time):
    1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the
       **Gmail API**.
    2. Under *OAuth consent screen*, choose **External**, leave it in **Testing**, and add your own
       address as the only test user.
    3. Under *Credentials*, create an **OAuth client ID** of type **Desktop app** and download the
-      JSON.
-   4. Save it as `~/.unfinished-business/credentials.json` (or set `UB_CREDENTIALS=/path/to.json`).
-2. **Install**
-   ```sh
-   npm install
-   export ELEVENLABS_API_KEY=sk_...
-   ```
-3. **See who's waiting** (read-only, prints to the terminal, signs you in on first run)
-   ```sh
-   npm run scan            # list your ghosts and what they'll say
-   npm run scan -- --speak # also pre-generate their voices into the cache
-   ```
-4. **Let them in**
-   ```sh
-   npm start
-   ```
-   A 👻 appears in the menu bar and the first ghost drifts in from the edge of the screen.
+      JSON file.
+4. **Follow the four steps in the app window:**
+   1. *Connect your Gmail*: choose that JSON file, then **Sign in with Google**. Google will say the
+      app isn't verified; it's your own private app, so click **Continue** and allow read access.
+   2. *Give them a voice*: paste your ElevenLabs API key. It's stored encrypted in your Keychain.
+      Press **▶ Hear a ghost** to check it.
+   3. *See who's waiting*: **Look in my inbox**.
+   4. *Let them in*: pick *Slow burn* or *Demo* pace and press **Release the ghosts**.
+
+You can close the window and the ghosts stay. The 👻 in the menu bar reopens it.
+
+### Running from source
+
+Needs Node **22.12+**.
+
+```sh
+npm install
+npm start               # the app, same as above
+npm run scan            # terminal-only: list your ghosts and what they'll say
+npm run uninstall-haunt # terminal twin of "Undo everything…"
+```
+
+From source, the Google client file goes at `~/.unfinished-business/credentials.json` (or set
+`UB_CREDENTIALS`), and the CLI reads the voice key from `ELEVENLABS_API_KEY`.
 
 ### Settings
 
@@ -99,7 +112,8 @@ src/gmail/auth.js    installed-app OAuth (loopback + PKCE), token storage, revok
 src/gmail/label.js   the optional 👻 label and its removal
 src/voice/script.js  what each ghost says, by age
 src/voice/tts.js     ElevenLabs text-to-speech with an on-disk cache
-src/app/             Electron: menu-bar app, click-through overlay, Web Audio chain
+src/app/             Electron: control room window, menu-bar app, click-through overlay, Web Audio chain
+src/uninstall.js     everything "Undo everything…" does
 bin/                 `scan` and `uninstall-haunt` CLIs
 ```
 
